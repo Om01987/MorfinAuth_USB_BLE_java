@@ -1,0 +1,13 @@
+*.iml
+.gradle
+/.idea
+.DS_Store
+build
+.externalNativeBuild
+.cxx
+local.properties
+MorfinAuth/build
+MorfinAuth/.gradle
+app/.cxx
+app/build
+app/.gradle

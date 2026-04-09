@@ -1,0 +1,114 @@
+apply plugin: 'com.android.application'
+
+// Used to set the package version name and version code
+ext.versionMajor 	= 2
+ext.versionMinor 	= 0
+ext.versionPatch 	= 0
+ext.versionRevision = 8
+
+def computeVersionName() {
+    return String.format('%d.%d.%d.%d', versionMajor, versionMinor, versionPatch, versionRevision)
+}
+
+// Will return 120042 for Jenkins build #42
+def computeVersionCode() {
+    return (versionMajor * 1000000) + (versionMinor * 100000) + (versionPatch * 10000) + (versionRevision * 1000) + Integer.valueOf(System.env.BUILD_NUMBER ?: 0)
+}
+
+ext {
+    computedVersionName = ""
+    computedVersionCode = ""
+}
+
+tasks.register('getVersionName') {
+    doLast {
+        // Obtain the versionName by calling the computeVersionName() method
+        computedVersionName = computeVersionName()
+        // Store the versionName in a file
+        file('versionName.txt').text = computedVersionName
+        println "Version Name: ${computedVersionName}"
+    }
+}
+
+tasks.register('getVersionCode') {
+    doLast {
+        // Obtain the versionName by calling the computeVersionName() method
+        computedVersionCode = computeVersionCode()
+        // Store the versionName in a file
+        file('versionCode.txt').text = computedVersionCode
+        println "Version Code: ${computedVersionCode}"
+    }
+}
+
+android {
+    compileSdk 36
+    namespace 'com.mantra.morfinauthsample'
+    defaultConfig {
+        applicationId "com.mantra.morfinauthsample"
+        minSdkVersion 21
+        //noinspection EditedTargetSdkVersion
+        targetSdkVersion 36
+        versionCode computeVersionCode() //9//5 previous build
+        versionName computeVersionName() //"1.0.0.8"//"1.0.0.4" previous build
+    }
+
+    signingConfigs {
+        release {
+            keyAlias project.hasProperty("keyAlias") ? project["keyAlias"] : ""
+            keyPassword project.hasProperty("keyPass") ? project["keyPass"] : ""
+            storeFile project.hasProperty("storeFilePath") ? file(project["storeFilePath"]) : null
+            storePassword project.hasProperty("storePass") ? project["storePass"] : ""
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            applicationVariants.all{
+                variant ->
+                    variant.outputs.each{
+                        output->
+                            def name = applicationName + "_" + computeVersionCode() + ".apk"
+                            output.outputFileName = name
+                    }
+            }
+        }
+    }
+
+    defaultConfig {
+        multiDexEnabled true
+    }
+
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+
+}
+
+dependencies {
+    //implementation fileTree(dir: "libs", include: ["*.jar"])
+    //implementation fileTree(dir: "libs", include: ["*.aar"])
+    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.navigation:navigation-fragment:2.9.7'
+    implementation 'androidx.navigation:navigation-ui:2.9.7'
+    implementation files('libs/MorfinAuth.aar')
+    //implementation project(path: ':MorfinAuth')
+    implementation 'com.intuit.sdp:sdp-android:1.1.1'
+    implementation 'com.intuit.ssp:ssp-android:1.1.1'
+   /* implementation 'androidx.recyclerview:recyclerview:1.3.2'*/
+    implementation 'com.karumi:dexter:6.2.3'
+
+}
